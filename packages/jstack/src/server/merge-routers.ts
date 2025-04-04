@@ -23,9 +23,15 @@ export type InferSchemaFromRouters<
 //   __resolvedType?: InferSchemaFromRouters<T>
 // }
 
+export declare const UnmergedRoutersSymbol: unique symbol
+
+type RoutersToMerge = Record<string, Hono<any, any, any> | (() => Promise<Router<any>>)>
+
+export type MergedRouter<R extends RoutersToMerge> = Router<InferSchemaFromRouters<R>> & { [UnmergedRoutersSymbol]: R }
+
 export function mergeRouters<
-  R extends Record<string, Hono<any, any, any> | (() => Promise<Router<any>>)>,
->(api: Hono<any, any, any>, routers: R): Router<InferSchemaFromRouters<R>>  {
+  R extends RoutersToMerge,
+>(api: Hono<any, any, any>, routers: R): MergedRouter<R>  {
   const mergedRouter = new Router()
   Object.assign(mergedRouter, api)
 
@@ -56,5 +62,5 @@ export function mergeRouters<
 
   mergedRouter.registerSubrouterMiddleware()
 
-  return mergedRouter as Router<InferSchemaFromRouters<R>>
+  return mergedRouter as MergedRouter<R>
 }
